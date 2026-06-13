@@ -50,10 +50,13 @@
       # O_DIRECT) with macOS equivalents and graceful runtime fallbacks — see
       # ./darwin.nix. The image-file path needs no real block-device I/O, so
       # exfatprogs builds and runs as a Mach-O. NOT linuxOnly.
-      # Smoke: every exfatprogs tool exits non-zero on -V/--help (e.g. mkfs.exfat
-      # -V → 1), which trips the smoke runner's `set -e`. Invoke the multicall
-      # bare instead: the dispatcher lists the programs and exits 0.
-      smoke = [ ];
+      # Smoke: every exfatprogs *tool* exits non-zero on -V/--help (e.g.
+      # mkfs.exfat -V → 1), which trips the smoke runner's `set -e`. Ask the
+      # multicall dispatcher itself for `--help` instead: it lists the programs
+      # and exits 0. (Not an empty arg list — macOS's bash 3.2 errors on
+      # `"${SMOKE_ARGS[@]}"` for an empty array under `set -u`, failing the
+      # darwin smoke; a single real arg sidesteps that.)
+      smoke = [ "--help" ];
       smokePattern = "exfatprogs is one binary";
       build = pkgs:
         let isDarwin = pkgs.pkgsStatic.stdenv.hostPlatform.isDarwin;

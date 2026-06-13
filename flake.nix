@@ -50,8 +50,11 @@
       # O_DIRECT) with macOS equivalents and graceful runtime fallbacks — see
       # ./darwin.nix. The image-file path needs no real block-device I/O, so
       # exfatprogs builds and runs as a Mach-O. NOT linuxOnly.
-      smoke = [ "--unpin-program=mkfs.exfat" "-V" ];
-      smokePattern = "exfatprogs version";
+      # Smoke: every exfatprogs tool exits non-zero on -V/--help (e.g. mkfs.exfat
+      # -V → 1), which trips the smoke runner's `set -e`. Invoke the multicall
+      # bare instead: the dispatcher lists the programs and exits 0.
+      smoke = [ ];
+      smokePattern = "exfatprogs is one binary";
       build = pkgs:
         let isDarwin = pkgs.pkgsStatic.stdenv.hostPlatform.isDarwin;
         in

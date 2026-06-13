@@ -64,4 +64,9 @@ p: p.overrideAttrs (o: {
       "-DO_DIRECT=0"
     ];
   };
+  # nixpkgs marks exfatprogs linux-only (meta.platforms), so a darwin build is
+  # refused at eval ("not available on the requested hostPlatform"). The gaps
+  # are all portable Linux-isms shimmed above, so widen the platform set to let
+  # it evaluate and build as a Mach-O.
+  meta = (o.meta or { }) // { platforms = pkgs.lib.platforms.unix; };
 })

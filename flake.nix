@@ -44,6 +44,12 @@
     lib.mkStandaloneFlake {
       inherit self;
       name = "exfatprogs";
+
+      # Build via the unpin-llvm engine + emit a bitcode multicall module.
+      engine = "unpin-llvm";
+      multicall = {
+        programs = [{ name = "dump.exfat"; } { name = "exfat2img"; } { name = "exfatlabel"; } { name = "fsck.exfat"; } { name = "mkfs.exfat"; } { name = "tune.exfat"; }];
+      };
       binName = "exfatprogs";
       # macOS: nixpkgs marks exfatprogs linux-only, but the gaps are portable
       # Linux-isms (byteswap.h, sys/sysmacros.h, linux/fs.h types + BLK ioctls,
@@ -59,16 +65,20 @@
       smoke = [ "--help" ];
       smokePattern = "exfatprogs is one binary";
       build = pkgs:
-        let isDarwin = pkgs.pkgsStatic.stdenv.hostPlatform.isDarwin;
-        in
-        lib.cppRenameMulticall (spec // {
-          inherit pkgs;
-          basePkg =
-            if isDarwin
-            then (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs
-            else pkgs.pkgsStatic.exfatprogs;
-          isTargetDarwin = isDarwin;
-        });
+        if pkgs.stdenv.hostPlatform.isLinux then
+          # Engine path (linux): plain pkgsStatic; the bitcode multicall module
+          # does the fold (each program's `main` → `unpin__exfatprogs__*_main`).
+          # No cpp-rename, so no `-lgcc` (the clang/musl engine has compiler-rt,
+          # not libgcc — cppRenameMulticall's `-lgcc` only suits the gcc path /
+          # mingw, and is dropped on darwin/cosmo anyway).
+          pkgs.pkgsStatic.exfatprogs
+        else
+          # darwin: cpp-rename fold with the portability patches (./darwin.nix).
+          lib.cppRenameMulticall (spec // {
+            inherit pkgs;
+            basePkg = (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs;
+            isTargetDarwin = true;
+          });
       # Windows: same portable-Linux-ism gaps as macOS. cosmocc gives the POSIX
       # layer (like dosfstools/e2fsprogs); the few headers cosmo still lacks are
       # supplied by the same shim approach. See ./cosmo.nix.

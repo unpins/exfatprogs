@@ -73,12 +73,19 @@
           # mingw, and is dropped on darwin/cosmo anyway).
           pkgs.pkgsStatic.exfatprogs
         else
-          # darwin: cpp-rename fold with the portability patches (./darwin.nix).
-          lib.cppRenameMulticall (spec // {
-            inherit pkgs;
-            basePkg = (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs;
-            isTargetDarwin = true;
-          });
+          # darwin: the portability patches (./darwin.nix), and NOTHING else --
+          # the engine folds it exactly like linux above. The cpp-rename fold
+          # that used to live here dates from before the engine reached darwin;
+          # now that darwin is an engine host, mkStandaloneFlake folded the
+          # cpp-renamed output a SECOND time. The first fold had already renamed
+          # each `main`, so the module hook found none for `dump.exfat` and the
+          # entry trampoline would bind to the dispatcher's own main and recurse
+          # until the stack died. unpins/mtools hit this first and was fixed the
+          # same way; here the nix-lib guard caught it at build time
+          # (`multicallModuleHookLTO: 'dump.exfat' defines no main of its own`)
+          # instead of shipping the recursion, which is what the released darwin
+          # artifacts have been doing.
+          (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs;
       # Windows: same portable-Linux-ism gaps as macOS. cosmocc gives the POSIX
       # layer (like dosfstools/e2fsprogs); the few headers cosmo still lacks are
       # supplied by the same shim approach. See ./cosmo.nix.

@@ -1,5 +1,5 @@
 {
-  description = "exfatprogs (mkfs.exfat + fsck.exfat + … ) as a single self-contained binary";
+  description = "exfatprogs (mkfs.exfat + fsck.exfat + …) as a single self-contained binary";
 
   nixConfig = {
     extra-substituters = [ "https://unpins.cachix.org" ];

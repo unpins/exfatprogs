@@ -1,6 +1,6 @@
 # exfatprogs
 
-[exfatprogs](https://github.com/exfatprogs/exfatprogs) — the userspace utilities for the exFAT filesystem: `mkfs.exfat`, `fsck.exfat`, `dump.exfat`, `exfat2img`, `tune.exfat` and `exfatlabel`. A single self-contained binary, built natively for Linux, macOS, and Windows.
+[exfatprogs](https://github.com/exfatprogs/exfatprogs) — the userspace programs for the exFAT filesystem: `mkfs.exfat`, `fsck.exfat`, `dump.exfat`, `exfat2img`, `tune.exfat` and `exfatlabel`. A single self-contained binary, built natively for Linux, macOS, and Windows.
 
 [![CI](https://github.com/unpins/exfatprogs/actions/workflows/exfatprogs.yml/badge.svg)](https://github.com/unpins/exfatprogs/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)

@@ -49,6 +49,10 @@
       engine = "unpin-llvm";
       multicall = {
         programs = [{ name = "dump.exfat"; } { name = "exfat2img"; } { name = "exfatlabel"; } { name = "fsck.exfat"; } { name = "mkfs.exfat"; } { name = "tune.exfat"; }];
+        # What the windows fold below dispatches, from the same `spec` that
+        # builds it — so CI checks the .exe against this instead of against
+        # itself, and a table that drifts stops being a green run.
+        windowsTable = lib.cppRenameTable spec;
       };
       binName = "exfatprogs";
       # macOS: nixpkgs marks exfatprogs linux-only, but the gaps are portable

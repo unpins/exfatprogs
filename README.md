@@ -9,7 +9,7 @@
 
 Part of the [unpins](https://unpins.org) catalog; install it with [`unpin`](https://github.com/unpins/unpin): `unpin install exfatprogs`.
 
-All three platforms create and check exFAT filesystems in image files. Linux also operates on block devices (`/dev/sd*`); on macOS and Windows it is image-only. The Windows build is a [Cosmopolitan](https://github.com/jart/cosmopolitan) `.exe` (see Build notes).
+All three platforms create and check exFAT filesystems in image files. Linux also operates on block devices (`/dev/sd*`); on macOS and Windows it is image-only.
 
 ## Usage
 
@@ -57,6 +57,5 @@ The [Releases](https://github.com/unpins/exfatprogs/releases) page has standalon
 
 - **Block devices:** Linux only. macOS and Windows expose no exFAT block-device layer, so there the tools work on image files.
 - **macOS:** upstream targets Linux, but the gaps are portable Linux-isms with graceful fallbacks — a small shim include dir supplies `<byteswap.h>`, `<sys/sysmacros.h>` and the `<linux/types.h>`/`<linux/fs.h>` kernel typedefs + `BLK*` ioctl numbers, plus `-DO_DIRECT=0`. See [`darwin.nix`](darwin.nix).
-- **Windows:** built via [Cosmopolitan](https://github.com/jart/cosmopolitan), not mingw — see [`cosmo.nix`](cosmo.nix). cosmocc already provides most of the Linux layer; the one missing header (`<linux/fs.h>`) is shimmed, the `__u8` typedef cosmo's `<linux/types.h>` omits is added, and `O_EXCL` is neutralized on the image fd (cosmo's NT `open()` EINVALs on `O_RDWR|O_EXCL` for a regular file; wine tolerates it, so it only surfaced on a real Windows host).
-- **Multicall:** the six programs are folded into one binary — on Linux and macOS by the unpin-llvm engine (per-program bitcode module), and on Windows by a source-level `main` → `<prog>_main` rename (`lib.cppRenameMulticall`). Either way a single copy of the shared `libexfat.a` is kept.
+- **Windows:** built via [Cosmopolitan](https://github.com/jart/cosmopolitan), not mingw — Cosmopolitan already provides most of the Linux layer upstream targets.
 - **Tests:** no native suite is wired — exfatprogs' automake `make check` has no tests, and its real integration tests (`tests/`) need loopback devices/root, which the build sandbox lacks. The release smoke test lists the folded programs.

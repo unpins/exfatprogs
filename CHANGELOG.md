@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.2-1] - 2026-09-26
+
 Initial release — `exfatprogs` 1.3.2 as a single self-contained binary, built
 natively for Linux, macOS, and Windows.
 

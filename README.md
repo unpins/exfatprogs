@@ -55,7 +55,7 @@ The [Releases](https://github.com/unpins/exfatprogs/releases) page has standalon
 
 ## Build notes
 
-- **Block devices:** Linux only. macOS and Windows expose no exFAT block-device layer, so there the tools work on image files.
+- **Block devices:** Linux only. macOS and Windows expose no exFAT block-device layer, so there the programs work on image files.
 - **macOS:** upstream targets Linux, but the gaps are portable Linux-isms with graceful fallbacks — a small shim include dir supplies `<byteswap.h>`, `<sys/sysmacros.h>` and the `<linux/types.h>`/`<linux/fs.h>` kernel typedefs + `BLK*` ioctl numbers, plus `-DO_DIRECT=0`. See [`darwin.nix`](darwin.nix).
 - **Windows:** built via [Cosmopolitan](https://github.com/jart/cosmopolitan), not mingw — Cosmopolitan already provides most of the Linux layer upstream targets.
 - **Tests:** no native suite is wired — exfatprogs' automake `make check` has no tests, and its real integration tests (`tests/`) need loopback devices/root, which the build sandbox lacks. The release smoke test lists the folded programs.

@@ -75,7 +75,18 @@
           # No cpp-rename, so no `-lgcc` (the clang/musl engine has compiler-rt,
           # not libgcc — cppRenameMulticall's `-lgcc` only suits the gcc path /
           # mingw, and is dropped on darwin/cosmo anyway).
-          pkgs.pkgsStatic.exfatprogs
+          pkgs.pkgsStatic.exfatprogs.overrideAttrs (old: {
+            doCheck = pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform;
+            # upstream's fsck suite; its upcase-table cases call the other
+            # programs by name.
+            nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ (with pkgs.buildPackages; [ xz xxd ]);
+            checkPhase = ''
+              runHook preCheck
+              export PATH="$PWD/mkfs:$PWD/dump:$PWD/fsck:$PWD/tune:$PWD/label:$PWD/exfat2img:$PATH"
+              (cd tests && FSCK1=../fsck/fsck.exfat FSCK2=../fsck/fsck.exfat bash ./test_fsck.sh)
+              runHook postCheck
+            '';
+          })
         else
           # darwin: the portability patches (./darwin.nix), and NOTHING else --
           # the engine folds it exactly like linux above. The cpp-rename fold

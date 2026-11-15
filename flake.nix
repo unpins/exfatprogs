@@ -54,7 +54,6 @@
         # itself, and a table that drifts stops being a green run.
         windowsTable = lib.cppRenameTable spec;
       };
-      binName = "exfatprogs";
       # macOS: nixpkgs marks exfatprogs linux-only, but the gaps are portable
       # Linux-isms (byteswap.h, sys/sysmacros.h, linux/fs.h types + BLK ioctls,
       # O_DIRECT) with macOS equivalents and graceful runtime fallbacks — see

@@ -1,0 +1,19 @@
+The writable device open is `O_RDWR | O_EXCL`. O_EXCL on a regular file is a
+Linux no-op, but Cosmopolitan's NT open() rejects it with EINVAL ("open failed:
+…, Invalid argument" → "exFAT format fail!"). O_EXCL only matters for block
+devices, which Windows images are not, so neutralize it under Cosmopolitan (the
+same fix as dosfstools; a real-Windows-only failure, wine tolerates it).
+
+--- a/lib/libexfat.c
++++ b/lib/libexfat.c
+@@ -12,6 +12,10 @@
+ #include <sys/sysmacros.h>
+ #include <unistd.h>
+ #include <fcntl.h>
++#ifdef __COSMOPOLITAN__
++#undef O_EXCL
++#define O_EXCL 0
++#endif
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>

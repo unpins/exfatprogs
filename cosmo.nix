@@ -1,4 +1,4 @@
-# exfatprogs via cosmoStaticCross for Windows-x86_64, folded into one APE with
+# exfatprogs via cosmoStaticCross for Windows-x86_64, folded into one .exe with
 # the cpp-rename recipe (lib.cppRenameMulticall, isCosmo path).
 #
 # Same portable-Linux-ism gaps as the macOS build (see ./darwin.nix), but
@@ -13,12 +13,8 @@
 # (cosmo's <linux/types.h> defines __u16/__u32/__u64 + __le* but omits __u8, so
 # the shim adds that one typedef too.)
 #
-# Plus one source fix: the writeable device open is `O_RDWR | O_EXCL`
-# (libexfat.c:151). O_EXCL on a regular file is a Linux no-op but cosmocc's NT
-# open() rejects it with EINVAL ("open failed: …, Invalid argument" →
-# "exFAT format fail!"). O_EXCL only matters for block devices, which Windows
-# images aren't, so neutralize it under cosmo — exactly the dosfstools fix, and
-# again a real-VM-only failure (wine tolerates it).
+# Plus cosmo-no-o-excl.patch: Cosmopolitan's NT open() rejects O_EXCL on a
+# regular file (the patch header has the details).
 { unpins-lib, spec }:
 pkgs:
 let
@@ -44,10 +40,7 @@ let
   '';
 
   basePkg = cosmoPkgs.exfatprogs.overrideAttrs (o: {
-    postPatch = (o.postPatch or "") + ''
-      awk '/#include <fcntl.h>/ && !done {print; print "#ifdef __COSMOPOLITAN__"; print "#undef O_EXCL"; print "#define O_EXCL 0"; print "#endif"; done=1; next} {print}' \
-        lib/libexfat.c > lib/libexfat.c.tmp && mv lib/libexfat.c.tmp lib/libexfat.c
-    '';
+    patches = (o.patches or [ ]) ++ [ ./cosmo-no-o-excl.patch ];
     env = (o.env or { }) // {
       NIX_CFLAGS_COMPILE = builtins.concatStringsSep " " [
         (o.env.NIX_CFLAGS_COMPILE or "")

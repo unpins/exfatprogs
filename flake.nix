@@ -9,15 +9,13 @@
   inputs.unpins-lib.url = "github:unpins/nix-lib";
 
   # exfatprogs ships six sbin programs, each in its own subdir linking the shared
-  # lib/libexfat.a. The library is plain fs code with no callbacks into the
-  # programs, so we fold them with the cpp-rename recipe (lib.cppRenameMulticall), keeping a
-  # single libexfat.a copy. The real binary is bin/exfatprogs(.exe); every
-  # program name is an argv[0] alias.
+  # lib/libexfat.a. Linux and macOS fold them through the engine; the Windows
+  # (cosmo) build uses the cpp-rename recipe (lib.cppRenameMulticall), which is
+  # what `spec` below describes.
   outputs = { self, unpins-lib }:
     let
       lib = unpins-lib.lib;
-      # Shared fold spec; per-target bits (pkgs, basePkg, isTargetDarwin/isCosmo)
-      # are merged in by `build` / `windowsBuild`.
+      # The Windows fold's spec; cosmo.nix merges in its per-target bits.
       spec = {
         primary = "exfatprogs";
         # Recursive build: each program lives in its own subdir Makefile, so
@@ -87,18 +85,8 @@
             '';
           })
         else
-          # darwin: the portability patches (./darwin.nix), and NOTHING else --
-          # the engine folds it exactly like linux above. The cpp-rename fold
-          # that used to live here dates from before the engine reached darwin;
-          # now that darwin is an engine host, mkStandaloneFlake folded the
-          # cpp-renamed output a SECOND time. The first fold had already renamed
-          # each `main`, so the module hook found none for `dump.exfat` and the
-          # entry trampoline would bind to the dispatcher's own main and recurse
-          # until the stack died. unpins/mtools hit this first and was fixed the
-          # same way; here the nix-lib guard caught it at build time
-          # (`multicallModuleHookLTO: 'dump.exfat' defines no main of its own`)
-          # instead of shipping the recursion, which is what the released darwin
-          # artifacts have been doing.
+          # darwin: only the portability shims (./darwin.nix); the engine
+          # folds it as on linux.
           (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs;
       # Windows: same portable-Linux-ism gaps as macOS. cosmocc gives the POSIX
       # layer (like dosfstools/e2fsprogs); the few headers cosmo still lacks are

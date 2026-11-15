@@ -17,7 +17,7 @@
 #                           non-block fd makes ioctl() fail → default sector
 #                           size / discard-skipped (both image-file no-ops).
 #   * -DO_DIRECT=0        — macOS has no O_DIRECT (it uses fcntl F_NOCACHE); the
-#                           only user is the optional fsck `--verify` open, which
+#                           only user is mkfs.exfat -C/--check-written, which
 #                           degrades to a normal read. 0 = no extra open flag.
 #   * posix_fadvise       — already #ifdef POSIX_FADV_WILLNEED in exfat_dir.c, so
 #                           it compiles out on macOS with no shim.

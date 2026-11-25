@@ -38,6 +38,19 @@
           done
         '';
       };
+
+      # upstream's fsck suite where the build machine runs the result; its
+      # upcase-table cases call the other programs by name.
+      withSuite = pkgs: drv: drv.overrideAttrs (old: {
+        doCheck = pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform;
+        nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ (with pkgs.buildPackages; [ xz xxd ]);
+        checkPhase = ''
+          runHook preCheck
+          export PATH="$PWD/mkfs:$PWD/dump:$PWD/fsck:$PWD/tune:$PWD/label:$PWD/exfat2img:$PATH"
+          (cd tests && FSCK1=../fsck/fsck.exfat FSCK2=../fsck/fsck.exfat bash ./test_fsck.sh)
+          runHook postCheck
+        '';
+      });
     in
     lib.mkStandaloneFlake {
       inherit self;
@@ -65,29 +78,18 @@
       # darwin smoke; a single real arg sidesteps that.)
       smoke = [ "--help" ];
       smokePattern = "exfatprogs is one binary";
-      build = pkgs:
+      build = pkgs: withSuite pkgs (
         if pkgs.stdenv.hostPlatform.isLinux then
           # Engine path (linux): plain pkgsStatic; the bitcode multicall module
           # does the fold (each program's `main` → `unpin__exfatprogs__*_main`).
           # No cpp-rename, so no `-lgcc` (the clang/musl engine has compiler-rt,
           # not libgcc — cppRenameMulticall's `-lgcc` only suits the gcc path /
           # mingw, and is dropped on darwin/cosmo anyway).
-          pkgs.pkgsStatic.exfatprogs.overrideAttrs (old: {
-            doCheck = pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform;
-            # upstream's fsck suite; its upcase-table cases call the other
-            # programs by name.
-            nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ (with pkgs.buildPackages; [ xz xxd ]);
-            checkPhase = ''
-              runHook preCheck
-              export PATH="$PWD/mkfs:$PWD/dump:$PWD/fsck:$PWD/tune:$PWD/label:$PWD/exfat2img:$PATH"
-              (cd tests && FSCK1=../fsck/fsck.exfat FSCK2=../fsck/fsck.exfat bash ./test_fsck.sh)
-              runHook postCheck
-            '';
-          })
+          pkgs.pkgsStatic.exfatprogs
         else
           # darwin: only the portability shims (./darwin.nix); the engine
           # folds it as on linux.
-          (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs;
+          (import ./darwin.nix { inherit pkgs; }) pkgs.pkgsStatic.exfatprogs);
       # Windows: same portable-Linux-ism gaps as macOS. cosmocc gives the POSIX
       # layer (like dosfstools/e2fsprogs); the few headers cosmo still lacks are
       # supplied by the same shim approach. See ./cosmo.nix.

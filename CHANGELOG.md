@@ -5,7 +5,7 @@
 ### Changed
 
 - exfatprogs' fsck test suite (23 damaged images) now runs on every native
-  Linux build, so a regression fails the build instead of shipping.
+  Linux and macOS build, so a regression fails the build instead of shipping.
 
 ## [1.3.2-1] - 2026-09-26
 
